@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Christmas Potluck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbf6ee; --card:#ffffff; --ink:#2a2420; --muted:#7a6f66; --line:#eadfd1;
+    --red:#b3261e; --red-soft:#fbe9e7; --green:#1f6b45; --green-soft:#e6f2ea;
+    --gold:#b7861f; --gold-soft:#fbf1dc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 16px 60px}
+  header{text-align:center;margin-bottom:22px}
+  .snow{font-size:22px;letter-spacing:10px;color:var(--gold)}
+  h1{font-family:Fraunces,Georgia,serif;font-weight:800;font-size:clamp(30px,7vw,46px);margin:6px 0 4px;color:var(--red);line-height:1.05}
+  .sub{color:var(--muted);margin:0}
+  .counts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}
+  .count{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+  .count b{display:block;font-family:Fraunces,serif;font-size:28px;line-height:1}
+  .count span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .count.app b{color:var(--gold)} .count.main b{color:var(--red)} .count.des b{color:var(--green)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:18px}
+  h2{font-family:Fraunces,serif;font-size:20px;margin:0 0 12px}
+  label{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+  input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fffdfa;color:var(--ink)}
+  input:focus,select:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .cats button{padding:10px 6px;border:1.5px solid var(--line);background:#fffdfa;border-radius:10px;font:inherit;font-weight:600;cursor:pointer;color:var(--ink)}
+  .cats button[aria-pressed="true"][data-c="app"]{border-color:var(--gold);background:var(--gold-soft)}
+  .cats button[aria-pressed="true"][data-c="main"]{border-color:var(--red);background:var(--red-soft)}
+  .cats button[aria-pressed="true"][data-c="des"]{border-color:var(--green);background:var(--green-soft)}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .btn{margin-top:14px;width:100%;padding:12px;border:0;border-radius:10px;background:var(--red);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+  .btn:disabled{opacity:.5;cursor:default}
+  .warn{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--gold-soft);color:#6b4e0f;font-size:13px;display:none}
+  .warn.show{display:block}
+  .msg{font-size:13px;color:var(--muted);margin-top:8px;min-height:1em}
+  .section{margin-bottom:18px}
+  .section h3{font-family:Fraunces,serif;font-size:18px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  ul{list-style:none;margin:0;padding:0}
+  li{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:6px}
+  li .d{flex:1;min-width:0}
+  li .d strong{display:block;word-wrap:break-word}
+  li .d small{color:var(--muted)}
+  li.mine{border-color:var(--gold)}
+  .x{border:0;background:none;color:var(--muted);font-size:20px;cursor:pointer;padding:2px 6px;line-height:1}
+  .x:hover{color:var(--red)}
+  .empty{color:var(--muted);font-style:italic;font-size:14px;padding:4px 2px}
+  .status{text-align:center;color:var(--muted);font-size:13px;margin:10px 0}
+  .ro .form-only{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="snow">❄ ✦ ❄</div>
+    <h1>Christmas Potluck</h1>
+    <p class="sub">Add what you're bringing so we don't end up with five potato salads.</p>
+  </header>
+
+  <div class="counts">
+    <div class="count app"><b id="n-app">0</b><span>Appetizers</span></div>
+    <div class="count main"><b id="n-main">0</b><span>Mains</span></div>
+    <div class="count des"><b id="n-des">0</b><span>Desserts</span></div>
+  </div>
+
+  <div class="card form-only" id="formCard">
+    <h2>I'm bringing…</h2>
+    <form id="f" autocomplete="off">
+      <label for="who">Your name</label>
+      <input id="who" maxlength="40" placeholder="e.g. Marie & Ken" required>
+      <label>Category</label>
+      <div class="cats" role="group" aria-label="Category">
+        <button type="button" data-c="app" aria-pressed="true">Appetizer / snack</button>
+        <button type="button" data-c="main" aria-pressed="false">Main</button>
+        <button type="button" data-c="des" aria-pressed="false">Dessert</button>
+      </div>
+      <div class="row">
+        <div style="flex:3">
+          <label for="dish">Dish</label>
+          <input id="dish" maxlength="80" placeholder="e.g. Quiche lorraine" required>
+        </div>
+        <div style="flex:1">
+          <label for="serves">Serves</label>
+          <input id="serves" type="number" min="1" max="99" placeholder="8">
+        </div>
+      </div>
+      <div class="warn" id="warn"></div>
+      <button class="btn" id="add" type="submit">Add to the list</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <div class="status" id="status">Loading the list…</div>
+  <div id="lists"></div>
+</div>
+
+<script>
+// ▼▼▼ Paste your Google Apps Script Web app URL here (ends with /exec) ▼▼▼
+const API_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+// ▲▲▲
+
+const CATS = {
+  app:  {label:"Appetizers & snacks", color:"var(--gold)"},
+  main: {label:"Mains", color:"var(--red)"},
+  des:  {label:"Desserts", color:"var(--green)"}
+};
+let cat = "app", all = [], busy = false;
+const $ = id => document.getElementById(id);
+
+// Remember this guest's name and which entries they created (so they can remove them)
+const store = {
+  get(k, d){ try { return JSON.parse(localStorage.getItem("potluck_"+k)) ?? d; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem("potluck_"+k, JSON.stringify(v)); } catch(e){} }
+};
+let owned = store.get("owned", {});   // {id: token}
+$("who").value = store.get("name", "");
+
+document.querySelectorAll(".cats button").forEach(b => b.onclick = () => {
+  cat = b.dataset.c;
+  document.querySelectorAll(".cats button").forEach(x => x.setAttribute("aria-pressed", x === b));
+});
+
+// --- overlap detection ---
+const STOP = new Set(["the","and","with","homemade","mini","salad","des","les","aux","avec"]);
+const words = s => (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+  .replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(w => w.length > 2 && !STOP.has(w))
+  .map(w => w.replace(/(es|s)$/,""));
+function checkOverlap(){
+  const w = new Set(words($("dish").value)), el = $("warn");
+  const hits = w.size ? all.filter(it => words(it.dish).some(x => w.has(x))) : [];
+  if (hits.length){
+    el.textContent = "Heads up — similar already on the list: " + hits.map(h => `${h.dish} (${h.name})`).join(", ");
+    el.classList.add("show");
+  } else el.classList.remove("show");
+}
+$("dish").addEventListener("input", checkOverlap);
+
+// --- render ---
+function render(){
+  const by = {app:[], main:[], des:[]};
+  all.forEach(it => (by[it.cat] || by.app).push(it));
+  for (const k in by) $("n-"+k).textContent = by[k].length;
+  const root = $("lists"); root.replaceChildren();
+  for (const k of ["app","main","des"]){
+    const sec = document.createElement("div"); sec.className = "section";
+    const h = document.createElement("h3");
+    const dot = document.createElement("span"); dot.className = "dot"; dot.style.background = CATS[k].color;
+    h.append(dot, CATS[k].label); sec.append(h);
+    if (!by[k].length){
+      const e = document.createElement("div"); e.className = "empty"; e.textContent = "Nothing yet — be the first!";
+      sec.append(e);
+    }
+    const ul = document.createElement("ul");
+    by[k].sort((a,b)=>a.ts-b.ts).forEach(it => {
+      const li = document.createElement("li");
+      const d = document.createElement("div"); d.className = "d";
+      const s = document.createElement("strong"); s.textContent = it.dish;
+      const sm = document.createElement("small");
+      sm.textContent = it.name + (it.serves ? ` · serves ${it.serves}` : "");
+      d.append(s, sm); li.append(d);
+      if (owned[it.id]){
+        li.className = "mine";
+        const x = document.createElement("button"); x.className = "x"; x.title = "Remove"; x.textContent = "×";
+        x.onclick = () => removeItem(it.id); li.append(x);
+      }
+      ul.append(li);
+    });
+    sec.append(ul); root.append(sec);
+  }
+}
+
+// --- API ---
+async function load(){
+  try {
+    const r = await fetch(API_URL, {cache:"no-store"});
+    const j = await r.json();
+    if (j.ok){ all = j.items; $("status").textContent = ""; render(); checkOverlap(); }
+  } catch(e){
+    if (!all.length) $("status").textContent = "Couldn't load the list — check your connection and refresh.";
+  }
+}
+async function post(payload){
+  // text/plain body avoids a CORS preflight, which Apps Script doesn't support
+  const r = await fetch(API_URL, {method:"POST", body: JSON.stringify(payload)});
+  return r.json();
+}
+
+$("f").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  if (busy) return;
+  const name = $("who").value.trim(), dish = $("dish").value.trim();
+  if (!name || !dish) return;
+  busy = true; $("add").disabled = true; $("msg").textContent = "Saving…";
+  try {
+    const j = await post({action:"add", name, cat, dish, serves: $("serves").value});
+    if (!j.ok) throw new Error(j.error);
+    owned[j.id] = j.token; store.set("owned", owned); store.set("name", name);
+    all = j.items; render();
+    $("dish").value = ""; $("serves").value = ""; $("warn").classList.remove("show");
+    $("msg").textContent = "Added — thank you! 🎄";
+    setTimeout(() => $("msg").textContent = "", 3000);
+  } catch(e){
+    $("msg").textContent = "Couldn't save — please try again.";
+  } finally { busy = false; $("add").disabled = false; }
+});
+
+async function removeItem(id){
+  if (busy) return;
+  busy = true;
+  try {
+    const j = await post({action:"remove", id, token: owned[id]});
+    if (j.ok || j.error === "not_found"){ delete owned[id]; store.set("owned", owned); }
+    if (j.items) { all = j.items; render(); } else load();
+  } catch(e){ $("msg").textContent = "Couldn't remove — please try again."; }
+  finally { busy = false; }
+}
+
+if (API_URL.startsWith("PASTE")){
+  $("status").textContent = "Setup needed: paste your Apps Script URL into API_URL in index.html.";
+  render();
+} else {
+  render(); load();
+  setInterval(load, 20000); // pick up other guests' dishes
+}
+</script>
+</body>
+</html>
