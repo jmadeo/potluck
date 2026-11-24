@@ -22,10 +22,10 @@ const CATS = ['app', 'main', 'des'];
 const PARTY_DATE = 'Christmas Eve, Thursday December 24';
 const PARTY_TIME = 'from 18:00';
 const MAP_URL    = 'https://maps.app.goo.gl/Sy9wri4zBR91xSQh8';
-const EMAIL_SUBJECT = '🎄 Christmas Potluck — ' + PARTY_DATE;
-const EMAIL_TEXT = "You're invited! Everyone brings a dish — an appetizer, a main or a dessert. " +
-                   "Please add yours to the list so we don't all bring the same thing.";
-const BUTTON_TEXT = 'Add my dish';
+const EMAIL_SUBJECT = '🎄 Christmas Eve Potluck — ' + PARTY_DATE;
+const EMAIL_TEXT = "You are invited to our Christmas Eeve potluck party. Family members and partners are welcome. Everyone brings a dish — appetizer/snack, a main or a dessert — AND a drink (soft or alcohol)" +
+                   "Please add yours to the list so we don't all bring the same thing. Hope to see you at the party ! Rino and Julien";
+const BUTTON_TEXT = 'CLICK HERE to add your dish';
 // ===========================================
 
 function sheet_() {
