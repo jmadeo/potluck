@@ -104,7 +104,20 @@ function doGet() {
   return json_({ ok: true, items: list_() });
 }
 
+// Run this once from the editor (select "authorize", click Run) to grant the email permission.
+function authorize() {
+  Logger.log('Emails left today: ' + MailApp.getRemainingDailyQuota());
+}
+
 function doPost(e) {
+  try {
+    return handlePost_(e);
+  } catch (err) {
+    return json_({ ok: false, error: String(err && err.message || err) });
+  }
+}
+
+function handlePost_(e) {
   let body;
   try { body = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'bad_json' }); }
 
