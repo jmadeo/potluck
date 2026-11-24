@@ -55,6 +55,16 @@
   .empty{color:var(--muted);font-style:italic;font-size:14px;padding:4px 2px}
   .status{text-align:center;color:var(--muted);font-size:13px;margin:10px 0}
   .ro .form-only{display:none}
+  .date{font-family:Fraunces,serif;font-weight:600;font-size:18px;color:var(--green);margin:2px 0 6px}
+  textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fffdfa;color:var(--ink);resize:vertical}
+  .admin{margin-top:28px;border-style:dashed}
+  .inv-h{font-family:Fraunces,serif;font-size:16px;margin:20px 0 8px}
+  .inv-h span{color:var(--muted);font-family:Inter,sans-serif;font-size:13px;font-weight:400}
+  #invList li{padding:8px 12px;font-size:14px}
+  #invList small{color:var(--muted);margin-left:auto}
+  .hint{font-size:13px;color:var(--muted)}
+  footer{text-align:center;margin-top:30px}
+  footer a{color:var(--muted);font-size:12px;text-decoration:none;opacity:.6}
 </style>
 </head>
 <body>
@@ -62,6 +72,7 @@
   <header>
     <div class="snow">❄ ✦ ❄</div>
     <h1>Christmas Potluck</h1>
+    <p class="date">Wednesday, December 23</p>
     <p class="sub">Add what you're bringing so we don't end up with five potato salads.</p>
   </header>
 
@@ -82,16 +93,8 @@
         <button type="button" data-c="main" aria-pressed="false">Main</button>
         <button type="button" data-c="des" aria-pressed="false">Dessert</button>
       </div>
-      <div class="row">
-        <div style="flex:3">
-          <label for="dish">Dish</label>
-          <input id="dish" maxlength="80" placeholder="e.g. Quiche lorraine" required>
-        </div>
-        <div style="flex:1">
-          <label for="serves">Serves</label>
-          <input id="serves" type="number" min="1" max="99" placeholder="8">
-        </div>
-      </div>
+      <label for="dish">Dish</label>
+      <input id="dish" maxlength="80" placeholder="e.g. Quiche lorraine" required>
       <div class="warn" id="warn"></div>
       <button class="btn" id="add" type="submit">Add to the list</button>
       <div class="msg" id="msg"></div>
@@ -100,6 +103,27 @@
 
   <div class="status" id="status">Loading the list…</div>
   <div id="lists"></div>
+
+  <div class="card admin" id="admin" hidden>
+    <h2>Host — invitations</h2>
+    <div id="adminLogin">
+      <label for="akey">Admin password</label>
+      <input id="akey" type="password" autocomplete="current-password">
+      <button class="btn" id="aenter" type="button">Unlock</button>
+    </div>
+    <div id="adminPanel" hidden>
+      <label for="emails">Email addresses (one per line, or separated by commas)</label>
+      <textarea id="emails" rows="5" placeholder="marie@example.com&#10;ken@example.com"></textarea>
+      <label for="note">Personal note (optional)</label>
+      <textarea id="note" rows="3" maxlength="600" placeholder="Hope you can make it! Bring the kids."></textarea>
+      <button class="btn" id="send" type="button">Send invitations</button>
+      <div class="msg" id="amsg"></div>
+      <h3 class="inv-h">Already invited <span id="invCount"></span></h3>
+      <ul id="invList"></ul>
+      <p class="hint">As host you can also remove any dish with its ×.</p>
+    </div>
+  </div>
+  <footer><a href="#admin" id="hostLink">Host</a></footer>
 </div>
 
 <script>
@@ -121,6 +145,8 @@ const store = {
   set(k, v){ try { localStorage.setItem("potluck_"+k, JSON.stringify(v)); } catch(e){} }
 };
 let owned = store.get("owned", {});   // {id: token}
+let adminKey = "";
+try { adminKey = sessionStorage.getItem("potluck_admin") || ""; } catch(e){}
 $("who").value = store.get("name", "");
 
 document.querySelectorAll(".cats button").forEach(b => b.onclick = () => {
@@ -164,10 +190,10 @@ function render(){
       const d = document.createElement("div"); d.className = "d";
       const s = document.createElement("strong"); s.textContent = it.dish;
       const sm = document.createElement("small");
-      sm.textContent = it.name + (it.serves ? ` · serves ${it.serves}` : "");
+      sm.textContent = it.name;
       d.append(s, sm); li.append(d);
-      if (owned[it.id]){
-        li.className = "mine";
+      if (owned[it.id] || adminKey){
+        if (owned[it.id]) li.className = "mine";
         const x = document.createElement("button"); x.className = "x"; x.title = "Remove"; x.textContent = "×";
         x.onclick = () => removeItem(it.id); li.append(x);
       }
@@ -200,11 +226,11 @@ $("f").addEventListener("submit", async ev => {
   if (!name || !dish) return;
   busy = true; $("add").disabled = true; $("msg").textContent = "Saving…";
   try {
-    const j = await post({action:"add", name, cat, dish, serves: $("serves").value});
+    const j = await post({action:"add", name, cat, dish});
     if (!j.ok) throw new Error(j.error);
     owned[j.id] = j.token; store.set("owned", owned); store.set("name", name);
     all = j.items; render();
-    $("dish").value = ""; $("serves").value = ""; $("warn").classList.remove("show");
+    $("dish").value = ""; $("warn").classList.remove("show");
     $("msg").textContent = "Added — thank you! 🎄";
     setTimeout(() => $("msg").textContent = "", 3000);
   } catch(e){
@@ -216,12 +242,72 @@ async function removeItem(id){
   if (busy) return;
   busy = true;
   try {
-    const j = await post({action:"remove", id, token: owned[id]});
+    const j = await post({action:"remove", id, token: owned[id] || "", adminKey});
     if (j.ok || j.error === "not_found"){ delete owned[id]; store.set("owned", owned); }
     if (j.items) { all = j.items; render(); } else load();
   } catch(e){ $("msg").textContent = "Couldn't remove — please try again."; }
   finally { busy = false; }
 }
+
+// --- host / invitations (shown at #admin) ---
+function showAdmin(){
+  const on = location.hash === "#admin";
+  $("admin").hidden = !on;
+  if (on){ $("admin").scrollIntoView({behavior:"smooth"}); if (adminKey) unlock(adminKey, true); }
+}
+window.addEventListener("hashchange", showAdmin);
+
+function renderInvites(list){
+  const ul = $("invList"); ul.replaceChildren();
+  $("invCount").textContent = list.length ? `(${list.length})` : "";
+  if (!list.length){ const e = document.createElement("div"); e.className = "empty"; e.textContent = "No one yet."; ul.append(e); return; }
+  list.slice().reverse().forEach(i => {
+    const li = document.createElement("li");
+    const s = document.createElement("span"); s.textContent = i.email;
+    const d = document.createElement("small");
+    d.textContent = new Date(i.ts).toLocaleDateString(undefined, {month:"short", day:"numeric"}) + (i.count > 1 ? ` · ×${i.count}` : "");
+    li.append(s, d); ul.append(li);
+  });
+}
+async function unlock(key, silent){
+  $("aenter").disabled = true;
+  try {
+    const j = await post({action:"invites", adminKey: key});
+    if (!j.ok) throw new Error(j.error);
+    adminKey = key; try { sessionStorage.setItem("potluck_admin", key); } catch(e){}
+    $("adminLogin").hidden = true; $("adminPanel").hidden = false;
+    renderInvites(j.invites); render();
+  } catch(e){
+    adminKey = ""; try { sessionStorage.removeItem("potluck_admin"); } catch(_){}
+    if (!silent) $("amsg").textContent = "";
+    if (!silent) alertLogin(e.message === "unauthorized" ? "Wrong password." : e.message === "no_admin_key" ? "Set ADMIN_KEY in Apps Script first (see README)." : "Couldn't reach the server.");
+  } finally { $("aenter").disabled = false; }
+}
+function alertLogin(t){
+  let m = $("loginMsg");
+  if (!m){ m = document.createElement("div"); m.id = "loginMsg"; m.className = "msg"; $("adminLogin").append(m); }
+  m.textContent = t;
+}
+$("aenter").onclick = () => { const k = $("akey").value.trim(); if (k) unlock(k); };
+$("akey").addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); $("aenter").click(); } });
+
+$("send").onclick = async () => {
+  const emails = [...new Set($("emails").value.split(/[\s,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean))];
+  const bad = emails.filter(e => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
+  if (!emails.length){ $("amsg").textContent = "Add at least one email."; return; }
+  if (bad.length){ $("amsg").textContent = "Check these: " + bad.join(", "); return; }
+  $("send").disabled = true; $("amsg").textContent = `Sending ${emails.length}…`;
+  try {
+    const j = await post({action:"invite", adminKey, emails, note: $("note").value.trim(), site: location.origin + location.pathname});
+    if (!j.ok) throw new Error(j.error);
+    $("emails").value = "";
+    $("amsg").textContent = `Sent ${j.sent} invitation${j.sent === 1 ? "" : "s"} 🎄` + (j.failed?.length ? ` — failed: ${j.failed.join(", ")}` : "");
+    renderInvites(j.invites);
+  } catch(e){
+    $("amsg").textContent = e.message === "quota" ? "Gmail's daily sending limit is reached — try again tomorrow." : "Couldn't send — " + (e.message || "try again.");
+  } finally { $("send").disabled = false; }
+};
+showAdmin();
 
 if (API_URL.startsWith("PASTE")){
   $("status").textContent = "Setup needed: paste your Apps Script URL into API_URL in index.html.";
