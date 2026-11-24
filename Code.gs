@@ -18,7 +18,7 @@ const HEAD = ['id', 'ts', 'name', 'cat', 'dish', 'serves', 'token'];
 const INV_SHEET = 'Invites';
 const INV_HEAD = ['email', 'first_sent', 'last_sent', 'count'];
 const CATS = ['app', 'main', 'des'];
-const PARTY_DATE = 'Wednesday, December 23';
+const PARTY_DATE = 'Christmas Eve, Thursday December 24';
 
 function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();

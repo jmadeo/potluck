@@ -1,4 +1,4 @@
-# Christmas Potluck sign-up — Wednesday, December 23
+# Christmas Potluck sign-up — Thursday, December 24 · Christmas Eve
 
 Live site: https://jmadeo.github.io/potluck/
 Static page (GitHub Pages) + a Google Sheet as the shared list. Guests need no account.
