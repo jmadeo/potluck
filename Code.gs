@@ -18,7 +18,15 @@ const HEAD = ['id', 'ts', 'name', 'cat', 'dish', 'serves', 'token'];
 const INV_SHEET = 'Invites';
 const INV_HEAD = ['email', 'first_sent', 'last_sent', 'count'];
 const CATS = ['app', 'main', 'des'];
+// ===== EDIT THE INVITATION EMAIL HERE =====
 const PARTY_DATE = 'Christmas Eve, Thursday December 24';
+const PARTY_TIME = 'from 18:00';
+const MAP_URL    = 'https://maps.app.goo.gl/Sy9wri4zBR91xSQh8';
+const EMAIL_SUBJECT = '🎄 Christmas Potluck — ' + PARTY_DATE;
+const EMAIL_TEXT = "You're invited! Everyone brings a dish — an appetizer, a main or a dessert. " +
+                   "Please add yours to the list so we don't all bring the same thing.";
+const BUTTON_TEXT = 'Add my dish';
+// ===========================================
 
 function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -91,11 +99,12 @@ function inviteHtml_(site, note) {
     '<div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #eadfd1;border-radius:16px;padding:28px;text-align:center">' +
     '<div style="color:#b7861f;font-size:20px;letter-spacing:8px">❄ ✦ ❄</div>' +
     '<h1 style="font-family:Georgia,serif;color:#b3261e;font-size:30px;margin:8px 0 4px">Christmas Potluck</h1>' +
-    '<p style="color:#1f6b45;font-family:Georgia,serif;font-size:18px;margin:0 0 18px">' + PARTY_DATE + '</p>' +
-    '<p style="margin:0 0 20px;line-height:1.5">You\'re invited! Everyone brings a dish — an appetizer, a main or a dessert. ' +
-    'Please add yours to the list so we don\'t all bring the same thing.</p>' +
+    '<p style="color:#1f6b45;font-family:Georgia,serif;font-size:18px;margin:0 0 6px">' + esc_(PARTY_DATE) + '</p>' +
+    '<p style="color:#1f6b45;font-size:15px;margin:0 0 10px">' + esc_(PARTY_TIME) + '</p>' +
+    '<p style="margin:0 0 18px"><a href="' + esc_(MAP_URL) + '" style="color:#b3261e;font-weight:bold">📍 Location on Google Maps</a></p>' +
+    '<p style="margin:0 0 20px;line-height:1.5">' + esc_(EMAIL_TEXT) + '</p>' +
     noteHtml +
-    '<a href="' + esc_(site) + '" style="display:inline-block;background:#b3261e;color:#fff;text-decoration:none;font-weight:bold;padding:13px 26px;border-radius:10px">Add my dish</a>' +
+    '<a href="' + esc_(site) + '" style="display:inline-block;background:#b3261e;color:#fff;text-decoration:none;font-weight:bold;padding:13px 26px;border-radius:10px">' + esc_(BUTTON_TEXT) + '</a>' +
     '<p style="color:#7a6f66;font-size:12px;margin:22px 0 0">' + esc_(site) + '</p>' +
     '</div></div>';
 }
@@ -175,9 +184,10 @@ function sendInvites_(body) {
   if (MailApp.getRemainingDailyQuota() < emails.length) return json_({ ok: false, error: 'quota' });
 
   const html = inviteHtml_(site, note);
-  const plain = "You're invited to our Christmas Potluck on " + PARTY_DATE + "!\n" +
+  const plain = 'Christmas Potluck — ' + PARTY_DATE + ', ' + PARTY_TIME + '\n' +
+    'Location: ' + MAP_URL + '\n\n' + EMAIL_TEXT + '\n' +
     (note ? '\n' + note + '\n' : '') +
-    '\nPlease add the dish you\'ll bring here: ' + site + '\n';
+    '\n' + BUTTON_TEXT + ': ' + site + '\n';
 
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -191,7 +201,7 @@ function sendInvites_(body) {
     const now = new Date();
     emails.forEach(email => {
       try {
-        MailApp.sendEmail({ to: email, subject: '🎄 Christmas Potluck — ' + PARTY_DATE, body: plain, htmlBody: html, name: 'Christmas Potluck' });
+        MailApp.sendEmail({ to: email, subject: EMAIL_SUBJECT, body: plain, htmlBody: html, name: 'Christmas Potluck' });
         sent++;
         if (rowOf[email]) {
           const r = rowOf[email];
